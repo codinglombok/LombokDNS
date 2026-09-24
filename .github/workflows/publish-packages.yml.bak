@@ -23,13 +23,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - id: ver
-        run: |
-          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
-            echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
-          else
-            VERSION=$(node -p "require('./package.json').version")
-            echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          fi
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
 
   publish-npm:
     name: npm (GPR)
@@ -106,20 +100,6 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci && npm run build
-      - name: Configure Maven authentication
-        run: |
-          mkdir -p ~/.m2
-          cat > ~/.m2/settings.xml <<'SETTINGS'
-          <settings>
-            <servers>
-              <server>
-                <id>github</id>
-                <username>${env.GITHUB_ACTOR}</username>
-                <password>${env.GITHUB_TOKEN}</password>
-              </server>
-            </servers>
-          </settings>
-          SETTINGS
       - name: Build and publish Maven package
         run: |
           VERSION="${{ needs.version.outputs.version }}"
@@ -146,7 +126,6 @@ jobs:
             -Durl="https://maven.pkg.github.com/codinglombok/LombokDNS"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_ACTOR: ${{ github.actor }}
 
   publish-nuget:
     name: NuGet
@@ -168,29 +147,21 @@ jobs:
       - name: Build and publish NuGet package
         run: |
           VERSION="${{ needs.version.outputs.version }}"
-          mkdir -p nuget-content/content/dist
-          cp -r dist/* nuget-content/content/dist/
-          cat > lombokdns.csproj <<EOF
-          <Project Sdk="Microsoft.NET.Sdk">
-            <PropertyGroup>
-              <TargetFramework>netstandard2.0</TargetFramework>
-              <PackageId>codinglombok.LombokDNS</PackageId>
-              <Version>$VERSION</Version>
-              <Authors>codinglombok</Authors>
-              <Description>Complete DNS protocol library</Description>
-              <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
-              <PackageProjectUrl>https://github.com/codinglombok/LombokDNS</PackageProjectUrl>
-              <RepositoryUrl>https://github.com/codinglombok/LombokDNS.git</RepositoryUrl>
-              <RepositoryType>git</RepositoryType>
-              <IncludeBuildOutput>false</IncludeBuildOutput>
-            </PropertyGroup>
-            <ItemGroup>
-              <Content Include="dist/**" Pack="true" PackagePath="content/dist" />
-            </ItemGroup>
-          </Project>
+          cat > lombokdns.nuspec <<EOF
+          <?xml version="1.0"?>
+          <package><metadata>
+            <id>codinglombok.LombokDNS</id><version>$VERSION</version>
+            <authors>codinglombok</authors>
+            <description>Complete DNS protocol library</description>
+            <license type="expression">Apache-2.0</license>
+            <projectUrl>https://github.com/codinglombok/LombokDNS</projectUrl>
+            <repository type="git" url="https://github.com/codinglombok/LombokDNS.git"/>
+          </metadata>
+          <files><file src="dist/**" target="content/dist"/></files>
+          </package>
           EOF
-          dotnet pack -c Release -o ./nupkg
-          dotnet nuget push "./nupkg/codinglombok.LombokDNS.$VERSION.nupkg" \
+          nuget pack lombokdns.nuspec
+          dotnet nuget push "codinglombok.LombokDNS.$VERSION.nupkg" \
             --source "https://nuget.pkg.github.com/codinglombok/index.json" \
             --api-key "${{ secrets.GITHUB_TOKEN }}"
 
@@ -212,7 +183,7 @@ jobs:
           mkdir -p lib/lombokdns
           echo "module Lombokdns; VERSION = '$VERSION'; end" > lib/lombokdns/version.rb
           echo "require 'lombokdns/version'" > lib/lombokdns.rb
-          cat > lombokdns.gemspec <<GEMSPEC
+          cat > lombokdns.gemspec <<EOF
           Gem::Specification.new do |s|
             s.name        = 'lombokdns'
             s.version     = '$VERSION'
@@ -222,9 +193,8 @@ jobs:
             s.homepage    = 'https://github.com/codinglombok/LombokDNS'
             s.files       = Dir['lib/**/*.rb']
           end
-          GEMSPEC
+          EOF
           gem build lombokdns.gemspec
-          mkdir -p ~/.gem
           cat > ~/.gem/credentials <<CRED
           ---
           :github: Bearer ${{ secrets.GITHUB_TOKEN }}
