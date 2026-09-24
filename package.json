@@ -152,6 +152,7 @@
   "scripts": {
     "build": "tsc",
     "test": "tsx --test tests/core.test.ts tests/transport.test.ts",
+"test:full": "tsx --test tests/core.test.ts tests/transport.test.ts",
     "test:core": "tsx --test tests/core.test.ts",
     "test:transport": "tsx --test tests/transport.test.ts",
     "lint": "tsc --noEmit",
