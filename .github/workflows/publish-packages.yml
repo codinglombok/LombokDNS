@@ -48,7 +48,14 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
-      - run: |
+      - name: Scope package name for GPR and publish
+        run: |
+          node -e "
+            const fs = require('fs');
+            const pkg = JSON.parse(fs.readFileSync('package.json','utf8'));
+            pkg.name = '@codinglombok/lombokdns';
+            fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2));
+          "
           npm version "${{ needs.version.outputs.version }}" --no-git-tag-version --allow-same-version
           npm publish --ignore-scripts
         env:
