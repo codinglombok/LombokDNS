@@ -1,9 +1,12 @@
 # LombokDNS — Publish to GitHub Packages (5 registries)
-# Called by release-please or npm-publish after a successful release.
+# Auto-triggered when a GitHub Release is published.
+# Also callable from other workflows via workflow_call, or manually.
 # Publishes: npm (GPR), Container (ghcr.io), Maven (webjar), NuGet, RubyGems
 name: Publish to GitHub Packages
 
 on:
+  release:
+    types: [published]
   workflow_call:
   workflow_dispatch:
 
