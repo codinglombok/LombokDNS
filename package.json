@@ -37,17 +37,80 @@
     "./encoding": {
       "types": "./dist/utils/encoding.d.ts",
       "import": "./dist/utils/encoding.js"
+    },
+    "./transport": {
+      "types": "./dist/transport/types.d.ts",
+      "import": "./dist/transport/types.js"
+    },
+    "./transport/udp": {
+      "types": "./dist/transport/udp.d.ts",
+      "import": "./dist/transport/udp.js"
+    },
+    "./transport/tcp": {
+      "types": "./dist/transport/tcp.d.ts",
+      "import": "./dist/transport/tcp.js"
+    },
+    "./transport/dot": {
+      "types": "./dist/transport/dot.d.ts",
+      "import": "./dist/transport/dot.js"
+    },
+    "./transport/doh": {
+      "types": "./dist/transport/doh.d.ts",
+      "import": "./dist/transport/doh.js"
+    },
+    "./transport/doq": {
+      "types": "./dist/transport/doq.d.ts",
+      "import": "./dist/transport/doq.js"
+    },
+    "./client": {
+      "types": "./dist/transport/client.d.ts",
+      "import": "./dist/transport/client.js"
     }
   },
   "typesVersions": {
     "*": {
-      "core": ["./dist/core/types.d.ts"],
-      "name": ["./dist/core/name.d.ts"],
-      "message": ["./dist/core/message.d.ts"],
-      "edns": ["./dist/core/edns.d.ts"],
-      "zone": ["./dist/zone/zonefile.d.ts"],
-      "format": ["./dist/utils/format.d.ts"],
-      "encoding": ["./dist/utils/encoding.d.ts"]
+      "core": [
+        "./dist/core/types.d.ts"
+      ],
+      "name": [
+        "./dist/core/name.d.ts"
+      ],
+      "message": [
+        "./dist/core/message.d.ts"
+      ],
+      "edns": [
+        "./dist/core/edns.d.ts"
+      ],
+      "zone": [
+        "./dist/zone/zonefile.d.ts"
+      ],
+      "format": [
+        "./dist/utils/format.d.ts"
+      ],
+      "encoding": [
+        "./dist/utils/encoding.d.ts"
+      ],
+      "transport": [
+        "./dist/transport/types.d.ts"
+      ],
+      "transport/udp": [
+        "./dist/transport/udp.d.ts"
+      ],
+      "transport/tcp": [
+        "./dist/transport/tcp.d.ts"
+      ],
+      "transport/dot": [
+        "./dist/transport/dot.d.ts"
+      ],
+      "transport/doh": [
+        "./dist/transport/doh.d.ts"
+      ],
+      "transport/doq": [
+        "./dist/transport/doq.d.ts"
+      ],
+      "client": [
+        "./dist/transport/client.d.ts"
+      ]
     }
   },
   "files": [
@@ -67,6 +130,20 @@
     "dist/utils/format.d.ts",
     "dist/utils/encoding.js",
     "dist/utils/encoding.d.ts",
+    "dist/transport/types.js",
+    "dist/transport/types.d.ts",
+    "dist/transport/udp.js",
+    "dist/transport/udp.d.ts",
+    "dist/transport/tcp.js",
+    "dist/transport/tcp.d.ts",
+    "dist/transport/dot.js",
+    "dist/transport/dot.d.ts",
+    "dist/transport/doh.js",
+    "dist/transport/doh.d.ts",
+    "dist/transport/doq.js",
+    "dist/transport/doq.d.ts",
+    "dist/transport/client.js",
+    "dist/transport/client.d.ts",
     "dist/index.js",
     "dist/index.d.ts",
     "LICENSE",
@@ -74,15 +151,17 @@
   ],
   "scripts": {
     "build": "tsc",
-    "test": "tsx --test tests/core.test.ts",
-    "test:full": "tsx --test tests/core.test.ts",
+    "test": "tsx --test tests/core.test.ts tests/transport.test.ts",
+    "test:core": "tsx --test tests/core.test.ts",
+    "test:transport": "tsx --test tests/transport.test.ts",
     "lint": "tsc --noEmit",
     "clean": "rm -rf dist",
     "prepublishOnly": "npm run build && npm run test"
   },
   "devDependencies": {
-    "typescript": "^5.5.0",
-    "tsx": "^4.16.0"
+    "@types/node": "^26.6.2",
+    "tsx": "^4.16.0",
+    "typescript": "^5.5.0"
   },
   "keywords": [
     "dns",
