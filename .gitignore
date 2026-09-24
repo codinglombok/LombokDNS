@@ -1,0 +1,25 @@
+node_modules/
+dist/
+*.tgz
+*.tsbuildinfo
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Internal docs (not for public)
+internal/
+
+# Test artifacts
+coverage/
+.nyc_output/
+
+# npm debug
+npm-debug.log*

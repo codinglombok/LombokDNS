@@ -1,0 +1,200 @@
+# LombokDNS — Publish to GitHub Packages (5 registries)
+# Called by release-please or npm-publish after a successful release.
+# Publishes: npm (GPR), Container (ghcr.io), Maven (webjar), NuGet, RubyGems
+name: Publish to GitHub Packages
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  version:
+    name: Read version
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.ver.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: ver
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+  publish-npm:
+    name: npm (GPR)
+    needs: version
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://npm.pkg.github.com
+          scope: '@codinglombok'
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: |
+          npm version "${{ needs.version.outputs.version }}" --no-git-tag-version --allow-same-version
+          npm publish --ignore-scripts
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  publish-container:
+    name: Container (ghcr.io)
+    needs: version
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generate Dockerfile
+        run: |
+          cat > Dockerfile <<'DOCKER'
+          FROM node:22-alpine AS build
+          WORKDIR /app
+          COPY package.json package-lock.json ./
+          COPY README.md ./
+          RUN npm ci --ignore-scripts
+          COPY src/ src/
+          COPY tsconfig.json ./
+          RUN npx tsc
+          FROM node:22-alpine
+          WORKDIR /app
+          COPY --from=build /app/dist dist/
+          COPY --from=build /app/package.json .
+          COPY --from=build /app/README.md .
+          COPY LICENSE .
+          DOCKER
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ghcr.io/codinglombok/lombokdns:${{ needs.version.outputs.version }}
+
+  publish-maven:
+    name: Maven (webjar)
+    needs: version
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci && npm run build
+      - name: Build and publish Maven package
+        run: |
+          VERSION="${{ needs.version.outputs.version }}"
+          GROUP="com.github.codinglombok"
+          ARTIFACT="lombokdns"
+          MVN_DIR="maven-pkg"
+          mkdir -p "$MVN_DIR/META-INF/resources/webjars/$ARTIFACT/$VERSION"
+          cp -r dist/* "$MVN_DIR/META-INF/resources/webjars/$ARTIFACT/$VERSION/"
+          cat > "$MVN_DIR/pom.xml" <<EOF
+          <project><modelVersion>4.0.0</modelVersion>
+            <groupId>$GROUP</groupId><artifactId>$ARTIFACT</artifactId>
+            <version>$VERSION</version><packaging>jar</packaging>
+            <name>LombokDNS</name>
+            <url>https://github.com/codinglombok/LombokDNS</url>
+            <licenses><license><name>Apache-2.0</name></license></licenses>
+          </project>
+          EOF
+          cd "$MVN_DIR"
+          jar cf "../$ARTIFACT-$VERSION.jar" .
+          mvn deploy:deploy-file \
+            -DgroupId="$GROUP" -DartifactId="$ARTIFACT" -Dversion="$VERSION" \
+            -Dpackaging=jar -Dfile="../$ARTIFACT-$VERSION.jar" -DpomFile=pom.xml \
+            -DrepositoryId=github \
+            -Durl="https://maven.pkg.github.com/codinglombok/LombokDNS"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  publish-nuget:
+    name: NuGet
+    needs: version
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci && npm run build
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.x
+      - name: Build and publish NuGet package
+        run: |
+          VERSION="${{ needs.version.outputs.version }}"
+          cat > lombokdns.nuspec <<EOF
+          <?xml version="1.0"?>
+          <package><metadata>
+            <id>codinglombok.LombokDNS</id><version>$VERSION</version>
+            <authors>codinglombok</authors>
+            <description>Complete DNS protocol library</description>
+            <license type="expression">Apache-2.0</license>
+            <projectUrl>https://github.com/codinglombok/LombokDNS</projectUrl>
+            <repository type="git" url="https://github.com/codinglombok/LombokDNS.git"/>
+          </metadata>
+          <files><file src="dist/**" target="content/dist"/></files>
+          </package>
+          EOF
+          nuget pack lombokdns.nuspec
+          dotnet nuget push "codinglombok.LombokDNS.$VERSION.nupkg" \
+            --source "https://nuget.pkg.github.com/codinglombok/index.json" \
+            --api-key "${{ secrets.GITHUB_TOKEN }}"
+
+  publish-rubygems:
+    name: RubyGems (GPR)
+    needs: version
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 3.3
+      - name: Build and publish gem
+        run: |
+          VERSION="${{ needs.version.outputs.version }}"
+          mkdir -p lib/lombokdns
+          echo "module Lombokdns; VERSION = '$VERSION'; end" > lib/lombokdns/version.rb
+          echo "require 'lombokdns/version'" > lib/lombokdns.rb
+          cat > lombokdns.gemspec <<EOF
+          Gem::Specification.new do |s|
+            s.name        = 'lombokdns'
+            s.version     = '$VERSION'
+            s.summary     = 'Complete DNS protocol library'
+            s.authors     = ['codinglombok']
+            s.license     = 'Apache-2.0'
+            s.homepage    = 'https://github.com/codinglombok/LombokDNS'
+            s.files       = Dir['lib/**/*.rb']
+          end
+          EOF
+          gem build lombokdns.gemspec
+          cat > ~/.gem/credentials <<CRED
+          ---
+          :github: Bearer ${{ secrets.GITHUB_TOKEN }}
+          CRED
+          chmod 0600 ~/.gem/credentials
+          gem push --key github --host https://rubygems.pkg.github.com/codinglombok "lombokdns-$VERSION.gem"

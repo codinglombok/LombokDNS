@@ -1,0 +1,136 @@
+{
+  "name": "lombokdns",
+  "version": "0.1.0",
+  "description": "Complete DNS protocol library — 65+ record types, all transports (UDP/TCP/DoT/DoH/DoQ), DNSSEC, EDNS(0), mDNS/DNS-SD, zone files, TSIG, DANE, RPZ. Zero dependencies. Cross-language ports.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./core": {
+      "types": "./dist/core/types.d.ts",
+      "import": "./dist/core/types.js"
+    },
+    "./name": {
+      "types": "./dist/core/name.d.ts",
+      "import": "./dist/core/name.js"
+    },
+    "./message": {
+      "types": "./dist/core/message.d.ts",
+      "import": "./dist/core/message.js"
+    },
+    "./edns": {
+      "types": "./dist/core/edns.d.ts",
+      "import": "./dist/core/edns.js"
+    },
+    "./zone": {
+      "types": "./dist/zone/zonefile.d.ts",
+      "import": "./dist/zone/zonefile.js"
+    },
+    "./format": {
+      "types": "./dist/utils/format.d.ts",
+      "import": "./dist/utils/format.js"
+    },
+    "./encoding": {
+      "types": "./dist/utils/encoding.d.ts",
+      "import": "./dist/utils/encoding.js"
+    }
+  },
+  "typesVersions": {
+    "*": {
+      "core": ["./dist/core/types.d.ts"],
+      "name": ["./dist/core/name.d.ts"],
+      "message": ["./dist/core/message.d.ts"],
+      "edns": ["./dist/core/edns.d.ts"],
+      "zone": ["./dist/zone/zonefile.d.ts"],
+      "format": ["./dist/utils/format.d.ts"],
+      "encoding": ["./dist/utils/encoding.d.ts"]
+    }
+  },
+  "files": [
+    "dist/core/types.js",
+    "dist/core/types.d.ts",
+    "dist/core/name.js",
+    "dist/core/name.d.ts",
+    "dist/core/message.js",
+    "dist/core/message.d.ts",
+    "dist/core/rdata.js",
+    "dist/core/rdata.d.ts",
+    "dist/core/edns.js",
+    "dist/core/edns.d.ts",
+    "dist/zone/zonefile.js",
+    "dist/zone/zonefile.d.ts",
+    "dist/utils/format.js",
+    "dist/utils/format.d.ts",
+    "dist/utils/encoding.js",
+    "dist/utils/encoding.d.ts",
+    "dist/index.js",
+    "dist/index.d.ts",
+    "LICENSE",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "tsx --test tests/core.test.ts",
+    "test:full": "tsx --test tests/core.test.ts",
+    "lint": "tsc --noEmit",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run build && npm run test"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0",
+    "tsx": "^4.16.0"
+  },
+  "keywords": [
+    "dns",
+    "dns-client",
+    "dns-server",
+    "dns-resolver",
+    "dns-over-https",
+    "dns-over-tls",
+    "dns-over-quic",
+    "doh",
+    "dot",
+    "doq",
+    "dnssec",
+    "edns",
+    "edns0",
+    "tsig",
+    "dane",
+    "tlsa",
+    "mdns",
+    "dns-sd",
+    "zone-file",
+    "axfr",
+    "ixfr",
+    "svcb",
+    "https-record",
+    "rfc1035",
+    "rfc8484",
+    "rfc7858",
+    "rfc9250",
+    "rfc9460",
+    "dns-packet",
+    "dns-codec",
+    "zero-dependency",
+    "cross-platform",
+    "lombok",
+    "codinglombok"
+  ],
+  "author": "codinglombok",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/codinglombok/LombokDNS.git"
+  },
+  "homepage": "https://github.com/codinglombok/LombokDNS",
+  "bugs": {
+    "url": "https://github.com/codinglombok/LombokDNS/issues"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
